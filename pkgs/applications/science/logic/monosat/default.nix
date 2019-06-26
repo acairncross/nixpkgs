@@ -1,4 +1,4 @@
-{ stdenv, fetchFromGitHub, cmake, zlib, gmp, jdk8,
+{ stdenv, fetchFromGitHub, cmake, zlib, gmp, jdk8, git,
   # The JDK we use on Darwin currenly makes extensive use of rpaths which are
   # annoying and break the python library, so let's not bother for now
   includeJava ? !stdenv.hostPlatform.isDarwin, includeGplCode ? true }:
@@ -23,7 +23,7 @@ let
   core = stdenv.mkDerivation {
     name = "${pname}-${version}";
     inherit src;
-    buildInputs = [ cmake zlib gmp jdk8 ];
+    buildInputs = [ cmake zlib gmp jdk8 git ];
 
     cmakeFlags = [ "-DJAVA=${boolToCmake includeJava}" "-DGPL=${boolToCmake includeGplCode}" ];
 
