@@ -1,4 +1,4 @@
-{ stdenv, fetchFromGitHub, cmake, zlib, gmp, jdk8, git,
+{ stdenv, fetchFromGitHub, cmake, zlib, gmp-static, jdk8, git,
   # The JDK we use on Darwin currenly makes extensive use of rpaths which are
   # annoying and break the python library, so let's not bother for now
   includeJava ? !stdenv.hostPlatform.isDarwin, includeGplCode ? true }:
@@ -20,10 +20,12 @@ let
     inherit rev sha256;
   };
 
+  # The CMake build is set up to build both shared and static libraries, so
+  # both shared and static libraries are needed as dependencies.
   core = stdenv.mkDerivation {
     name = "${pname}-${version}";
     inherit src;
-    buildInputs = [ cmake zlib gmp jdk8 git ];
+    buildInputs = [ cmake zlib zlib.static gmp-static jdk8 git ];
 
     cmakeFlags = [ "-DJAVA=${boolToCmake includeJava}" "-DGPL=${boolToCmake includeGplCode}" ];
 

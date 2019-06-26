@@ -23557,7 +23557,9 @@ in
   minisat = callPackage ../applications/science/logic/minisat {};
   minisatUnstable = callPackage ../applications/science/logic/minisat/unstable.nix {};
 
-  monosat = callPackage ../applications/science/logic/monosat {};
+  monosat = callPackage ../applications/science/logic/monosat {
+    gmp-static = gmp.override { withStatic = true; };
+  };
 
   opensmt = callPackage ../applications/science/logic/opensmt { };
 
