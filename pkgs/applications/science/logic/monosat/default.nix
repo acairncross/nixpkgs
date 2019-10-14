@@ -1,4 +1,4 @@
-{ stdenv, fetchFromGitHub, cmake, zlib, gmp-static, jdk8, git,
+{ stdenv, fetchFromGitHub, cmake, zlib, gmp, jdk8, git,
   # The JDK we use on Darwin currenly makes extensive use of rpaths which are
   # annoying and break the python library, so let's not bother for now
   includeJava ? !stdenv.hostPlatform.isDarwin, includeGplCode ? true }:
@@ -8,8 +8,8 @@ with stdenv.lib;
 let
   boolToCmake = x: if x then "ON" else "OFF";
 
-  rev    = "2deeadeff214e975c9f7508bc8a24fa05a1a0c32";
-  sha256 = "09yhym2lxmn3xbhw5fcxawnmvms5jd9fw9m7x2wzil7yvy4vwdjn";
+  rev    = "60528a380a2fd17e84d04e86f14b2349e8f9fa51";
+  sha256 = "0604iaswg0rb56rvxyiid5c10ivg8f0fynqkmlm0icvw7ikrjrw9";
 
   pname   = "monosat";
   version = substring 0 7 sha256;
@@ -20,14 +20,16 @@ let
     inherit rev sha256;
   };
 
-  # The CMake build is set up to build both shared and static libraries, so
-  # both shared and static libraries are needed as dependencies.
   core = stdenv.mkDerivation {
     name = "${pname}-${version}";
     inherit src;
-    buildInputs = [ cmake zlib zlib.static gmp-static jdk8 git ];
+    buildInputs = [ cmake zlib gmp jdk8 git ];
 
-    cmakeFlags = [ "-DJAVA=${boolToCmake includeJava}" "-DGPL=${boolToCmake includeGplCode}" ];
+    cmakeFlags = [
+      "-DBUILD_STATIC=OFF"
+      "-DJAVA=${boolToCmake includeJava}"
+      "-DGPL=${boolToCmake includeGplCode}"
+    ];
 
     postInstall = optionalString includeJava ''
       mkdir -p $out/share/java
@@ -53,18 +55,15 @@ let
 
     propagatedBuildInputs = [ core cython ];
 
-    # This tells setup.py to use cython
+    # This tells setup.py to use cython, which should produce faster bindings
     MONOSAT_CYTHON = true;
 
     # The relative paths here don't make sense for our Nix build
-    # Also, let's use cython since it should produce faster bindings
     # TODO: do we want to just reference the core monosat library rather than copying the
     # shared lib? The current setup.py copies the .dylib/.so...
     postPatch = ''
-
       substituteInPlace setup.py \
-        --replace '../../../../libmonosat.dylib' '${core}/lib/libmonosat.dylib' \
-        --replace '../../../../libmonosat.so'  '${core}/lib/libmonosat.so'
+        --replace 'library_dir = "../../../../"' 'library_dir = "${core}/lib/"'
     '';
   };
 in core
