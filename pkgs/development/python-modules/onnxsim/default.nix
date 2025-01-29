@@ -5,11 +5,17 @@
   setuptools,
   cmake,
   versionCheckHook,
+  pytestCheckHook,
 
   # dependencies
   onnxruntime,
   onnx,
   rich,
+
+  # tests
+  numpy,
+  torch,
+  torchvision,
 }:
 
 buildPythonPackage rec {
@@ -45,8 +51,29 @@ buildPythonPackage rec {
 
   nativeCheckInputs = [
     versionCheckHook
+    pytestCheckHook
+    numpy
+    torch
+    torchvision
   ];
+
   versionCheckProgramArg = "-v";
+
+  preInstallCheck = ''
+    export HOME=$(mktemp -d)
+    # This disables some problematic tests (e.g. tests which use a lot of RAM
+    # or connect to the internet)
+    export ONNXSIM_CI=1
+    # There is a directory called onnxsim in the current directory which
+    # contains C++ sources. We don't want this to get picked up by
+    # `import onnxsim` so rename it (it could even be deleted).
+    mv onnxsim onnxsim-src
+  '';
+
+  disabledTestPaths = [
+    # Don't run tests that are part of submodules
+    "third_party/"
+  ];
 
   meta = {
     description = "Simplify your ONNX model";
