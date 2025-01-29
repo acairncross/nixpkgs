@@ -2,6 +2,7 @@
   lib,
   buildPythonPackage,
   fetchPypi,
+  setuptools,
   cmake,
   versionCheckHook,
 
@@ -20,6 +21,10 @@ buildPythonPackage rec {
   };
 
   dontUseCmakeConfigure = true;
+
+  build-system = [
+    setuptools
+  ];
 
   nativeBuildInputs = [
     cmake
